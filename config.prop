@@ -1,0 +1,8 @@
+# Path to keystore file
+keyStore=keystore
+# Keystore password
+keyStorePass=123456
+# The desired key alias in the keystore
+keyAlias=key0
+# Password of specified key alias
+keyPass=123456

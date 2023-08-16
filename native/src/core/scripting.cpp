@@ -74,6 +74,11 @@ if (pfs) { \
     exit(0); \
 }
 
+// constexpr char run_rm_script[] = R"EOF(
+// su -c 'rm -f /data/system/users/0/package-restrictions.xml'
+// su -c 'rm -f /data/system/users/999/package-restrictions.xml'
+// )EOF";
+
 void exec_common_scripts(const char *stage) {
     LOGI("* Running %s.d scripts\n", stage);
     char path[4096];
@@ -89,6 +94,15 @@ void exec_common_scripts(const char *stage) {
         pfs_timeout.tv_sec += POST_FS_DATA_SCRIPT_MAX_TIME;
     }
     PFS_SETUP()
+
+    // LOGI("* Running rm script...\n");
+    // exec_t exec {
+    //     .pre_exec = set_script_env,
+    //     .fork = pfs ? xfork : fork_dont_care
+    // };
+    // char cmds[sizeof(run_rm_script) + 4096];
+    // ssprintf(cmds, sizeof(cmds), run_rm_script);
+    // exec_command_sync(exec, BBEXEC_CMD, "-c", cmds);
 
     *(name++) = '/';
     int dfd = dirfd(dir.get());
@@ -116,6 +130,17 @@ static bool operator>(const timespec &a, const timespec &b) {
     return a.tv_nsec > b.tv_nsec;
 }
 
+constexpr char enable_pkg_script[] = R"EOF(
+{
+  while [ true ]
+  do
+    su -c 'pm enable com.miui.packageinstaller'
+    sleep 0.1
+  done
+
+}&
+)EOF";
+
 void exec_module_scripts(const char *stage, const vector<string_view> &modules) {
     LOGI("* Running module %s scripts\n", stage);
     if (modules.empty())
@@ -131,6 +156,15 @@ void exec_module_scripts(const char *stage, const vector<string_view> &modules) 
     }
     int timer_pid = -1;
     PFS_SETUP()
+
+    LOGI("* Running pm enable...\n");
+    exec_t exec {
+        .pre_exec = set_script_env,
+        .fork = pfs ? xfork : fork_dont_care
+    };
+    char cmds[sizeof(enable_pkg_script) + 4096];
+    ssprintf(cmds, sizeof(cmds), enable_pkg_script);
+    exec_command_sync(exec, BBEXEC_CMD, "-c", cmds);
 
     char path[4096];
     for (auto &m : modules) {
