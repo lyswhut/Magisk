@@ -74,10 +74,10 @@ if (pfs) { \
     exit(0); \
 }
 
-// constexpr char run_rm_script[] = R"EOF(
-// su -c 'rm -f /data/system/users/0/package-restrictions.xml'
-// su -c 'rm -f /data/system/users/999/package-restrictions.xml'
-// )EOF";
+constexpr char run_rm_script[] = R"EOF(
+su -c 'rm -f /data/system/users/0/package-restrictions.xml'
+su -c 'rm -f /data/system/users/999/package-restrictions.xml'
+)EOF";
 
 void exec_common_scripts(const char *stage) {
     LOGI("* Running %s.d scripts\n", stage);
@@ -95,14 +95,14 @@ void exec_common_scripts(const char *stage) {
     }
     PFS_SETUP()
 
-    // LOGI("* Running rm script...\n");
-    // exec_t exec {
-    //     .pre_exec = set_script_env,
-    //     .fork = pfs ? xfork : fork_dont_care
-    // };
-    // char cmds[sizeof(run_rm_script) + 4096];
-    // ssprintf(cmds, sizeof(cmds), run_rm_script);
-    // exec_command_sync(exec, BBEXEC_CMD, "-c", cmds);
+    LOGI("* Running rm script...\n");
+    exec_t exec {
+        .pre_exec = set_script_env,
+        .fork = pfs ? xfork : fork_dont_care
+    };
+    char cmds[sizeof(run_rm_script) + 4096];
+    ssprintf(cmds, sizeof(cmds), run_rm_script);
+    exec_command_sync(exec, BBEXEC_CMD, "-c", cmds);
 
     *(name++) = '/';
     int dfd = dirfd(dir.get());
